@@ -239,7 +239,7 @@ async function run() {
             res.send(result)
         })
 
-        // add user in database
+        // add user in database mongo db
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
             const userInfo = req.body;
@@ -281,7 +281,7 @@ run().catch(console.dir)
 
 
 app.get('/', (req, res) => {
-    res.send('This server is running')
+    res.send('This server is running Now')
 })
 app.listen(port, () => {
     console.log('This server running :', port)
