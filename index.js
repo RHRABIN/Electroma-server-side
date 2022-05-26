@@ -208,18 +208,30 @@ async function run() {
             const isAdmin = requesterUser?.role === 'admin';
             res.send({ admin: isAdmin })
         })
+
+
         //make admin api
-        app.put('/user/admin/:email', async (req, res) => {
+        app.put('/user/admin/:email', jwtVerify, async (req, res) => {
             const email = req.params.email;
+            const requerster = req.decoded.email;
+
+            const requesterStatus = await userCollection.findOne({ email: requerster });
+            const admin = requesterStatus.role === 'admin';
+
             const filter = { email: email };
 
-            const updateDoc = {
-                $set: {
-                    role: 'admin'
+            if (admin) {
+                const updateDoc = {
+                    $set: {
+                        role: 'admin'
+                    }
                 }
+                const result = await userCollection.updateOne(filter, updateDoc);
+                res.send(result);
             }
-            const result = await userCollection.updateOne(filter, updateDoc);
-            res.send(result);
+            else {
+                res.status(401).send({ message: 'Unauthorized Access' })
+            }
         })
         // load all user
         app.get('/users', jwtVerify, async (req, res) => {
