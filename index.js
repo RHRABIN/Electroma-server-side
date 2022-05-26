@@ -55,7 +55,7 @@ async function run() {
             res.send(result)
         })
         // get payment
-        app.post('/create-payment-intent', async (req, res) => {
+        app.post('/create-payment-intent', jwtVerify, async (req, res) => {
             const service = req.body;
             const price = service.price;
             const amount = price * 100;
@@ -98,7 +98,7 @@ async function run() {
         // delete service by admin api
         app.delete('/products/deletes/:id', async (req, res) => {
             const id = req.params.id;
-            console.log(id)
+
             const filter = { _id: ObjectId(id) };
             const result = await serviceCollection.deleteOne(filter);
             res.send(result);
@@ -176,7 +176,7 @@ async function run() {
         })
 
         //get single order by id
-        app.get('/item/:id', async (req, res) => {
+        app.get('/item/:id', jwtVerify, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) }
             const result = await orderCollection.findOne(query);
@@ -202,7 +202,7 @@ async function run() {
         //---------------------------------------------------------------//
         // user collection
         // confirm user are admin?
-        app.get('/user/admin/:email', async (req, res) => {
+        app.get('/user/admin/:email', jwtVerify, async (req, res) => {
             const email = req.params.email;
             const requesterUser = await userCollection.findOne({ email: email });
             const isAdmin = requesterUser?.role === 'admin';
@@ -212,6 +212,7 @@ async function run() {
         app.put('/user/admin/:email', async (req, res) => {
             const email = req.params.email;
             const filter = { email: email };
+
             const updateDoc = {
                 $set: {
                     role: 'admin'
@@ -221,7 +222,7 @@ async function run() {
             res.send(result);
         })
         // load all user
-        app.get('/users', async (req, res) => {
+        app.get('/users', jwtVerify, async (req, res) => {
             const result = await userCollection.find().toArray();
             res.send(result)
         })
