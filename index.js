@@ -10,7 +10,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 //middleware 
 app.use(cors());
 app.use(express.json());
-
+// live site: https://peaceful-waters-42797.herokuapp.com
 // jwrverify function
 function jwtVerify(req, res, next) {
     const authHeader = req.headers.authorization;
@@ -25,7 +25,8 @@ function jwtVerify(req, res, next) {
             return res.status(403).send({ message: 'forbidden' })
         }
         req.decoded = decoded;
-        console.log(decoded)
+
+
         next();
     })
 }
@@ -57,7 +58,6 @@ async function run() {
         app.post('/create-payment-intent', async (req, res) => {
             const service = req.body;
             const price = service.price;
-            console.log(price)
             const amount = price * 100;
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: amount,
@@ -89,6 +89,28 @@ async function run() {
             res.send(result)
         })
 
+        // load all service/product
+        app.get('/allproducts', jwtVerify, async (req, res) => {
+            const result = await serviceCollection.find().toArray();
+            res.send(result)
+        })
+
+        // delete service by admin api
+        app.delete('/products/deletes/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id)
+            const filter = { _id: ObjectId(id) };
+            const result = await serviceCollection.deleteOne(filter);
+            res.send(result);
+        })
+
+
+        // service add by admin
+        app.post('/product', async (req, res) => {
+            const product = req.body;
+            const result = await serviceCollection.insertOne(product);
+            res.send(result)
+        })
 
 
         //------------------------------------------------------------------//
@@ -112,7 +134,23 @@ async function run() {
             const paymentSummery = await paymentCollection.insertOne(payment);
             res.send(updateOrder)
         })
+        // updated paid status
+        app.patch('/order/paid/:id', async (req, res) => {
+            const id = req.params.id;
 
+            const filter = { _id: ObjectId(id) };
+            const updateDoc = {
+                $set: { shift: true }
+
+            }
+            const result = await orderCollection.updateOne(filter, updateDoc);
+            res.send(result)
+        })
+        //get all user order by admin
+        app.get('/orders', jwtVerify, async (req, res) => {
+            const result = await orderCollection.find().toArray();
+            res.send(result)
+        })
         // save order from user , create post api
         app.post('/order', async (req, res) => {
             const order = req.body;
@@ -163,7 +201,13 @@ async function run() {
         //--------------------------------------------------------------//
         //---------------------------------------------------------------//
         // user collection
-
+        // confirm user are admin?
+        app.get('/user/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const requesterUser = await userCollection.findOne({ email: email });
+            const isAdmin = requesterUser?.role === 'admin';
+            res.send({ admin: isAdmin })
+        })
         //make admin api
         app.put('/user/admin/:email', async (req, res) => {
             const email = req.params.email;
@@ -175,6 +219,11 @@ async function run() {
             }
             const result = await userCollection.updateOne(filter, updateDoc);
             res.send(result);
+        })
+        // load all user
+        app.get('/users', async (req, res) => {
+            const result = await userCollection.find().toArray();
+            res.send(result)
         })
 
         // add user in database
@@ -188,7 +237,7 @@ async function run() {
                 $set: userInfo,
             };
             const result = await userCollection.updateOne(filter, updateDoc, option);
-            const token = jwt.sign({ email: email }, process.env.APP_JWT, { expiresIn: '1h' });
+            const token = jwt.sign({ email: email }, process.env.APP_JWT, { expiresIn: '10d' });
             res.send({ result, token });
         })
         // update user information
