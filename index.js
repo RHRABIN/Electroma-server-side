@@ -236,6 +236,13 @@ async function run() {
                 res.status(401).send({ message: 'Unauthorized Access' })
             }
         })
+        // get single user information api
+        app.get('/userinfo/:email', async (req, res) => {
+            const email = req.params.email;
+
+            const result = await userCollection.findOne({ email: email });
+            res.send(result)
+        })
         // load all user
         app.get('/users', jwtVerify, async (req, res) => {
             const result = await userCollection.find().toArray();
