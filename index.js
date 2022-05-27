@@ -178,6 +178,7 @@ async function run() {
         //get single order by id
         app.get('/item/:id', jwtVerify, async (req, res) => {
             const id = req.params.id;
+
             const query = { _id: ObjectId(id) }
             const result = await orderCollection.findOne(query);
             res.send(result)
@@ -204,8 +205,10 @@ async function run() {
         // confirm user are admin?
         app.get('/user/admin/:email', jwtVerify, async (req, res) => {
             const email = req.params.email;
+
             const requesterUser = await userCollection.findOne({ email: email });
             const isAdmin = requesterUser?.role === 'admin';
+
             res.send({ admin: isAdmin })
         })
 
